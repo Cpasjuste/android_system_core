@@ -345,6 +345,13 @@ int __android_log_vprint(int prio, const char *tag, const char *fmt, va_list ap)
     return __android_log_write(prio, tag, buf);
 }
 
+#ifdef HISILICON_HI3630
+int __android_logPower_print()
+{
+    return 0;
+}
+#endif
+
 int __android_log_print(int prio, const char *tag, const char *fmt, ...)
 {
     va_list ap;

@@ -74,12 +74,18 @@ endif
 # Shared and static library for target
 # ========================================================
 include $(CLEAR_VARS)
+ifeq ($(TARGET_BOARD_PLATFORM), hi3630)
+    LOCAL_CFLAGS += -DHISILICON_HI3630
+endif
 LOCAL_CFLAGS += $(LIBLOG_CFLAGS)
 LOCAL_MODULE := liblog
 LOCAL_SRC_FILES := $(liblog_sources)
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
+ifeq ($(TARGET_BOARD_PLATFORM), hi3630)
+    LOCAL_CFLAGS += -DHISILICON_HI3630
+endif
 LOCAL_CFLAGS += $(LIBLOG_CFLAGS)
 LOCAL_MODULE := liblog
 LOCAL_WHOLE_STATIC_LIBRARIES := liblog
