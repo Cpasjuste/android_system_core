@@ -93,6 +93,11 @@ typedef enum android_LogPriority {
  */
 int __android_log_write(int prio, const char *tag, const char *text);
 
+#ifdef HISILICON_HI3630
+int __android_log_exception_write();
+int __android_logPower_print();
+#endif
+
 /*
  * Send a formatted string to the log, used like printf(fmt,...)
  */
