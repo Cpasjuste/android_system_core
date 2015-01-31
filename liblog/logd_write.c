@@ -346,6 +346,11 @@ int __android_log_vprint(int prio, const char *tag, const char *fmt, va_list ap)
 }
 
 #ifdef HISILICON_HI3630
+int __android_log_exception_write()
+{
+    return 0;
+}
+
 int __android_logPower_print()
 {
     return 0;
