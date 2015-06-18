@@ -35,7 +35,7 @@
 #include <android/set_abort_message.h>
 #endif
 
-#ifdef MOTOROLA_LOG
+#if defined(MOTOROLA_LOG) || defined(MTK_HARDWARE)
 #if HAVE_LIBC_SYSTEM_PROPERTIES
 #include <sys/system_properties.h>
 #endif
@@ -421,6 +421,50 @@ static int __write_to_log_init(log_id_t log_id, struct iovec *vec, size_t nr)
     return write_to_log(log_id, vec, nr);
 }
 
+#ifdef AMAZON_LOG
+int lab126_log_write(int bufID, int prio, const char *tag, const char *fmt, ...)
+{
+	va_list ap;
+	char buf[LOG_BUF_SIZE];
+	int _a = bufID;
+	int _b = prio;
+
+	// skip flooding logs
+	if (!tag)
+	{
+		tag = "";
+	}
+	if( strncmp(tag, "Sensors", 7) == 0
+		||  strncmp(tag, "qcom_se", 7) == 0 )
+	{
+		return 0;
+	}
+	// skip flooding logs
+
+	va_start(ap, fmt);
+	vsnprintf(buf, LOG_BUF_SIZE, fmt, ap);
+	va_end(ap);
+
+	char new_tag[128];
+	snprintf(new_tag, sizeof(new_tag), "AMZ-%s", tag);
+
+	return __android_log_buf_write(LOG_ID_MAIN, ANDROID_LOG_DEBUG, new_tag, buf);
+}
+
+int __vitals_log_print(int bufID, int prio, const char *tag, const char *fmt, ...)
+{
+	va_list ap;
+	char buf[LOG_BUF_SIZE];
+	int _a = bufID;
+	int _b = prio;
+
+	va_start(ap, fmt);
+	va_end(ap);
+
+	return __android_log_write(ANDROID_LOG_DEBUG, tag, "__vitals_log_print not implemented");
+}
+#endif
+
 int __android_log_write(int prio, const char *tag, const char *msg)
 {
     struct iovec vec[3];
@@ -621,3 +665,44 @@ int __android_log_bswrite(int32_t tag, const char *payload)
 
     return write_to_log(LOG_ID_EVENTS, vec, 4);
 }
+
+#ifdef MTK_HARDWARE
+struct xlog_record {
+    const char *tag_str;
+    const char *fmt_str;
+    int prio;
+};
+
+void __attribute__((weak)) __xlog_buf_printf(int bufid, const struct xlog_record *xlog_record, ...) {
+    va_list args;
+    va_start(args, xlog_record);
+#if    HAVE_LIBC_SYSTEM_PROPERTIES
+    int len = 0;
+    int do_xlog = 0;
+    char results[PROP_VALUE_MAX];
+
+
+    // MobileLog
+    len = __system_property_get ("debug.MB.running", results);
+    if (len && atoi(results))
+        do_xlog = 1;
+
+    // ModemLog
+    len = __system_property_get ("debug.mdlogger.Running", results);
+    if (len && atoi(results))
+        do_xlog = 1;
+
+    // Manual
+    len = __system_property_get ("persist.debug.xlog.enable", results);
+    if (len && atoi(results))
+        do_xlog = 1;
+
+    if (do_xlog > 0)
+#endif
+        __android_log_vprint(xlog_record->prio, xlog_record->tag_str, xlog_record->fmt_str, args);
+
+    // get rid of "unused parameter 'bufid'"
+    bufid = bufid;
+    return;
+}
+#endif
